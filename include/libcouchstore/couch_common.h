@@ -10,6 +10,31 @@
 extern "C" {
 #endif
 
+
+#ifdef _WIN32
+    /**
+     * Windows follows the LLP64 data model:
+     * http://en.wikipedia.org/wiki/LLP64#64-bit_data_models
+     *
+     * This means both the int and long int types have a size of 32 bits
+     * regardless if it's a 32 or 64 bits Windows system.
+     *
+     * And Windows defines the type cs_off_t as being a signed long integer:
+     * http://msdn.microsoft.com/en-us/library/323b6b3k.aspx
+     *
+     * This means we can't use cs_off_t on Windows if we deal with files
+     * that can have a size of 2Gb or more.
+     *
+     **/
+#  if defined(_MSC_VER) || defined(__BORLANDC__)
+    typedef __int64 cs_off_t;
+#  else
+    typedef long long int cs_off_t;
+#  endif
+#else
+    typedef off_t cs_off_t;
+#endif
+
     /** Document content metadata flags */
     typedef uint8_t couchstore_content_meta_flags;
     enum {
@@ -63,7 +88,7 @@ extern "C" {
         uint64_t doc_count;         /**< Total number of (non-deleted) documents */
         uint64_t deleted_count;     /**< Total number of deleted documents */
         uint64_t space_used;        /**< Disk space actively used by docs */
-        off_t header_position;      /**< File offset of current header */
+        cs_off_t header_position;   /**< File offset of current header */
     } DbInfo;
 
 
